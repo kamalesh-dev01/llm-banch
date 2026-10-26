@@ -1,0 +1,64 @@
+{
+  "productName": "LLMBench Overlay",
+  "version": "1.0.0",
+  "identifier": "com.llmbench.overlay",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "settings",
+        "title": "LLM Bench Overlay — Settings",
+        "width": 560,
+        "height": 500,
+        "resizable": false,
+        "center": true,
+        "decorations": true,
+        "visible": true,
+        "url": "index.html"
+      },
+      {
+        "label": "overlay",
+        "title": "LLM Bench Overlay",
+        "width": 240,
+        "height": 280,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "visible": false,
+        "url": "index.html#/overlay",
+        "x": 20,
+        "y": 20
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "default",
+          "description": "default capability",
+          "windows": ["settings", "overlay"],
+          "permissions": [
+            "core:default",
+            "shell:allow-execute",
+            "shell:allow-spawn"
+          ]
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [],
+    "resources": [],
+    "externalBin": [
+      "../sidecar/hw_monitor"
+    ]
+  }
+}

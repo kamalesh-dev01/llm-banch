@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getModels } from '../api/client'
 import ModelCard from '../components/ModelCard'
+import InstantChecker from '../components/InstantChecker'
+import StatCounter from '../components/StatCounter'
+import { ArrowRight, Compass, Cpu, CheckCircle2, Zap, Layers, Terminal } from 'lucide-react'
 
 export default function HomePage() {
   const [topModels, setTopModels] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch top 6 models by quality
+    // Fetch top models by quality score
     getModels({ sort: 'quality', limit: 6 })
       .then(res => {
         const models = Array.isArray(res.data) ? res.data : (res.data.models || [])
@@ -19,90 +22,183 @@ export default function HomePage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const firstModel = topModels[0]
+  const otherModels = topModels.slice(1)
+
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="py-20 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-accent-blue/10 to-transparent pointer-events-none"></div>
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <h1 className="text-5xl font-bold mb-6 text-text-primary leading-tight">
-            Find the Right Local LLM for Your Hardware
+    <div className="pb-16 space-y-24">
+      {/* HERO SECTION */}
+      <section className="relative pt-8 pb-16 text-center overflow-hidden">
+        {/* Animated ambient glow behind hero */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[340px] bg-gradient-to-tr from-accent/20 via-recommended/10 to-transparent blur-[110px] rounded-full pointer-events-none -z-10 animate-pulse duration-[6000ms]" />
+
+        <div className="relative z-10 max-w-4xl mx-auto space-y-6">
+          {/* Subtle badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-elevated border border-border text-xs font-mono text-muted mb-2">
+            <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+            <span>Telemetry-Backed LLM Hardware Analyzer</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-heading font-extrabold text-text tracking-tight leading-[1.15]">
+            Find the Right Local LLM for <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-cyan-300 to-recommended">Your Hardware</span>
           </h1>
-          <p className="text-xl text-text-secondary mb-10">
-            Compare models by speed, quality, and memory — then check if your PC can run them with our standalone scanner.
+
+          <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed">
+            Stop guessing if an open-weight model fits. Compare speed, VRAM thresholds, and real inference metrics before downloading gigabytes of weights.
           </p>
-          <div className="flex justify-center gap-4">
-            <Link to="/models" className="bg-accent-blue text-white px-8 py-4 rounded-lg font-semibold hover:bg-opacity-90 transition shadow-lg shadow-accent-blue/20">
-              Browse Models
-            </Link>
-            <a href="http://localhost:8000/static/LLMBench-Scanner.exe" className="bg-[#1e1e28] text-text-primary px-8 py-4 rounded-lg font-semibold hover:bg-[#2a2a35] transition border border-border-dark">
-              Scan My PC
-            </a>
+
+          {/* INSTANT CHECKER CARD INSIDE HERO */}
+          <div className="pt-6">
+            <InstantChecker />
           </div>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="border-y border-border-dark bg-bg-card py-6 mb-16">
-        <div className="container mx-auto px-4 flex justify-around text-center">
-          <div>
-            <div className="text-3xl font-bold text-accent-blue">20</div>
-            <div className="text-text-secondary text-sm mt-1">Models</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-accent-green">50+</div>
-            <div className="text-text-secondary text-sm mt-1">Quantizations</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-accent-amber">Free</div>
-            <div className="text-text-secondary text-sm mt-1">Forever</div>
+      {/* STAT COUNTERS (Count up on scroll) */}
+      <section className="border-y border-border bg-surface/70 backdrop-blur-md py-8 grid-bg">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            <StatCounter 
+              endValue={20} 
+              suffix="+" 
+              label="Verified Models" 
+              colorClass="text-accent" 
+            />
+            <StatCounter 
+              endValue={60} 
+              suffix="+" 
+              label="Tested Quantizations" 
+              colorClass="text-recommended" 
+            />
+            <StatCounter 
+              endValue={100} 
+              suffix="%" 
+              label="Free &amp; Client-Side" 
+              colorClass="text-minimum" 
+            />
           </div>
         </div>
       </section>
 
-      {/* Featured Models */}
-      <section className="mb-20">
-        <div className="flex justify-between items-end mb-8">
-          <h2 className="text-3xl font-bold text-text-primary">Top Models by Quality</h2>
-          <Link to="/models" className="text-accent-blue hover:underline">View all →</Link>
+      {/* FEATURED MODELS: BENTO-STYLE GRID */}
+      <section className="container mx-auto px-4 max-w-6xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-wider font-semibold mb-1">
+              <Zap size={14} />
+              <span>Benchmark Leaderboard</span>
+            </div>
+            <h2 className="text-3xl font-heading font-bold text-text">
+              Top Models by Quality
+            </h2>
+          </div>
+          <Link 
+            to="/models" 
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent/80 transition"
+          >
+            <span>View all models</span>
+            <ArrowRight size={16} />
+          </Link>
         </div>
         
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-bg-card rounded-lg animate-pulse border border-border-dark"></div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 h-64 shimmer rounded-xl border border-border"></div>
+            <div className="h-64 shimmer rounded-xl border border-border"></div>
+            <div className="h-60 shimmer rounded-xl border border-border"></div>
+            <div className="h-60 shimmer rounded-xl border border-border"></div>
+            <div className="h-60 shimmer rounded-xl border border-border"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {topModels.map(model => (
-              <ModelCard key={model.id} model={model} />
+            {/* First card in bento grid is larger */}
+            {firstModel && (
+              <div className="md:col-span-2">
+                <div className="h-full relative">
+                  <div className="absolute top-3 right-4 z-20">
+                    <span className="px-2.5 py-1 rounded-full bg-accent/20 border border-accent/40 text-accent text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+                      <SparkleIcon size={12} /> #1 Quality Pick
+                    </span>
+                  </div>
+                  <ModelCard model={firstModel} index={0} />
+                </div>
+              </div>
+            )}
+
+            {/* Remaining models in bento layout */}
+            {otherModels.map((model, idx) => (
+              <div key={model.id} className="h-full">
+                <ModelCard model={model} index={idx + 1} />
+              </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* How it works */}
-      <section className="mb-20 bg-bg-card border border-border-dark rounded-xl p-10">
-        <h2 className="text-3xl font-bold text-center mb-12 text-text-primary">How it works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <div>
-            <div className="w-12 h-12 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
-            <h3 className="text-xl font-semibold mb-2 text-text-primary">Browse Models</h3>
-            <p className="text-text-secondary">Explore our database of open-source models and compare their specifications.</p>
+      {/* HOW IT WORKS: 3 STEPS WITH CONNECTING LINE AND ICONS */}
+      <section className="container mx-auto px-4 max-w-5xl">
+        <div className="glass p-8 md:p-12 rounded-2xl relative overflow-hidden">
+          <div className="text-center mb-12">
+            <span className="text-xs font-mono uppercase tracking-widest text-muted font-semibold">
+              Three-Step Workflow
+            </span>
+            <h2 className="text-3xl font-heading font-bold text-text mt-1">
+              How LLM Bench Works
+            </h2>
           </div>
-          <div>
-            <div className="w-12 h-12 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
-            <h3 className="text-xl font-semibold mb-2 text-text-primary">Scan Your PC</h3>
-            <p className="text-text-secondary">Run our lightweight scanner to securely check your CPU, RAM, and GPU.</p>
-          </div>
-          <div>
-            <div className="w-12 h-12 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center text-xl font-bold mx-auto mb-4">3</div>
-            <h3 className="text-xl font-semibold mb-2 text-text-primary">Get Verdict</h3>
-            <p className="text-text-secondary">Instantly see which models and quantizations will run smoothly on your exact hardware.</p>
+
+          <div className="relative">
+            {/* Connecting line between the 3 steps */}
+            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-border -translate-y-1/2 z-0" />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl bg-elevated border border-border flex items-center justify-center text-accent mb-4 shadow-lg group-hover:border-accent transition">
+                  <Compass size={28} />
+                </div>
+                <div className="text-xs font-mono text-accent font-bold mb-1">01 &bull; BROWSE</div>
+                <h3 className="text-lg font-heading font-bold text-text mb-2">Browse Models</h3>
+                <p className="text-xs text-muted leading-relaxed max-w-xs">
+                  Explore quantized open-weights with verified parameter sizes, context lengths, and quality benchmarks.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl bg-elevated border border-border flex items-center justify-center text-recommended mb-4 shadow-lg">
+                  <Cpu size={28} />
+                </div>
+                <div className="text-xs font-mono text-recommended font-bold mb-1">02 &bull; TELEMETRY</div>
+                <h3 className="text-lg font-heading font-bold text-text mb-2">Check Hardware</h3>
+                <p className="text-xs text-muted leading-relaxed max-w-xs">
+                  Pick your GPU and RAM in the instant checker, or run our 3-second self-deleting scanner.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl bg-elevated border border-border flex items-center justify-center text-minimum mb-4 shadow-lg">
+                  <CheckCircle2 size={28} />
+                </div>
+                <div className="text-xs font-mono text-minimum font-bold mb-1">03 &bull; VERDICT</div>
+                <h3 className="text-lg font-heading font-bold text-text mb-2">Get Verdict</h3>
+                <p className="text-xs text-muted leading-relaxed max-w-xs">
+                  See instantly which quantization fits into VRAM, estimated tokens/second, and copy ready-to-run Ollama commands.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </div>
+  )
+}
+
+function SparkleIcon({ size = 12 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+    </svg>
   )
 }

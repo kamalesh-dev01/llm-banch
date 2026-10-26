@@ -4,19 +4,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        'bg-primary': '#0d0d0f',
-        'bg-card': '#13131a',
-        'bg-hover': '#1e1e28',
-        'border-dark': '#1e1e28',
-        'text-primary': '#e0dfd6',
-        'text-secondary': '#6a6a72',
-        'accent-blue': '#3a6aaa',
-        'accent-green': '#3cb080',
-        'accent-amber': '#e0a040',
-        'accent-red': '#d06050',
+        // Instrument panel tokens
+        bg: '#0a0b0d',
+        surface: '#101216',
+        elevated: '#151820',
+        border: '#1f232b',
+        text: '#e8eaed',
+        muted: '#8b929c',
+        accent: '#38bdf8', // cyan
+        recommended: '#34d399',
+        minimum: '#fbbf24',
+        'not-recommended': '#f87171',
+
+        // Backward-compatible aliases
+        'bg-primary': '#0a0b0d',
+        'bg-card': '#101216',
+        'bg-hover': '#151820',
+        'border-dark': '#1f232b',
+        'text-primary': '#e8eaed',
+        'text-secondary': '#8b929c',
+        'accent-blue': '#38bdf8',
+        'accent-green': '#34d399',
+        'accent-amber': '#fbbf24',
+        'accent-red': '#f87171',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['"Space Grotesk"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
     },
   },

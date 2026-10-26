@@ -1,0 +1,24 @@
+{
+  "machine_label": "laptop-rtx2050",
+  "ollama_url": "http://localhost:11434",
+  "gpu_mem_bandwidth_gbps": 112,
+  "runs_per_prompt": 2,
+  "num_predict": 200,
+  "num_ctx": 4096,
+  "models": [
+    "llama3.2:1b",
+    "llama3.2:3b",
+    "qwen2.5:0.5b",
+    "qwen2.5:1.5b",
+    "qwen2.5:3b",
+    "qwen2.5:7b",
+    "gemma2:2b",
+    "phi3:mini",
+    "tinyllama",
+    "smollm2:1.7b",
+    "deepseek-r1:1.5b",
+    "mistral:7b",
+    "llama3.2:3b-instruct-q8_0",
+    "qwen2.5:3b-instruct-q8_0"
+  ]
+}

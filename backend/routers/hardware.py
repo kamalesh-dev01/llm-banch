@@ -15,6 +15,41 @@ from services.verdict import get_verdict, get_best_quant_for_hardware
 
 router = APIRouter()
 
+@router.get("/gpus", summary="Get GPU List", description="Returns list of available GPUs with VRAM specs sorted by name")
+def get_gpus():
+    """Returns sorted list of GPUs from gpu_database.json."""
+    import json
+    import os
+    gpu_file = os.path.join(
+        os.path.dirname(__file__),
+        "..", "data", "gpu_database.json"
+    )
+    if not os.path.exists(gpu_file):
+        return []
+    with open(gpu_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    gpus_dict = data.get("gpus", {})
+    gpu_list = [{"name": name, "vram_gb": vram} for name, vram in gpus_dict.items()]
+    gpu_list.sort(key=lambda x: x["name"].lower())
+    return gpu_list
+
+@router.get("/scanner/download", summary="Download Scanner EXE", description="Serves the scanner EXE file for download.")
+def download_scanner():
+    """Serves the scanner EXE file for download."""
+    from fastapi.responses import FileResponse
+    import os
+    exe_path = os.path.join(
+        os.path.dirname(__file__),
+        "..", "static", "LLMBench-Scanner.exe"
+    )
+    if not os.path.exists(exe_path):
+        raise HTTPException(404, "Scanner not available")
+    return FileResponse(
+        exe_path,
+        media_type="application/octet-stream",
+        filename="LLMBench-Scanner.exe"
+    )
+
 @router.post("/hardware-scan", response_model=schemas.HardwareScanResponse, summary="Submit Hardware Scan", description="Saves user hardware specs and returns a session token")
 def submit_hardware_scan(scan_data: schemas.HardwareScanRequest, db: Session = Depends(get_db)):
     """Creates a new hardware session."""

@@ -6,6 +6,8 @@ llm_bench.db
 node_modules/
 dist/
 build/
+target/
+src-tauri/target/
 .venv/
 venv/
 *.exe

@@ -5,11 +5,15 @@ It sets up the app, configures CORS, creates database tables, and registers rout
 
 import logging
 from contextlib import asynccontextmanager
+import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
-from database import engine, Base
+from database import engine, Base, get_db
+from models import Model, ModelQuant
 from routers import models_router, hardware, recommend, benchmark
 
 # Setup basic logging
@@ -37,6 +41,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 # Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -52,15 +60,20 @@ app.include_router(recommend.router, prefix="/api", tags=["recommend"])
 app.include_router(benchmark.router, prefix="/api", tags=["benchmark"])
 
 @app.get("/api/health", tags=["health"])
-def health_check():
+def health_check(db: Session = Depends(get_db)):
     """
     Health check endpoint to verify the API is running and database is connected.
     
     Returns:
         dict: Status information.
     """
+    model_count = db.query(Model).count()
+    quant_count = db.query(ModelQuant).count()
     return {
         "status": "ok",
         "message": "LLM Bench API running",
-        "database": "connected"
+        "database": "connected",
+        "models": model_count,
+        "quants": quant_count,
+        "version": "1.0.0"
     }

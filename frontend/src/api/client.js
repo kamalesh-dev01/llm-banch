@@ -25,6 +25,9 @@ export const getModelQuants = (id) =>
   API.get(`/api/models/${id}/quants`)
 
 // Hardware
+export const getGpus = () =>
+  API.get('/api/gpus')
+
 export const submitHardwareScan = (data) =>
   API.post('/api/hardware-scan', data)
 
