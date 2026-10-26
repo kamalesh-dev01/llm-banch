@@ -54,12 +54,15 @@ CSV_COLUMNS: list[str] = [
     "peak_vram_used_gb",
     "avg_gpu_util",
     "error",
+    "file_size_gb",
+    "ac_plugged",
+    "avg_sm_clock_mhz",
 ]
 
 
 class GpuSampler:
     """
-    Samples GPU memory used and GPU utilization via pynvml every 200 ms in a background thread.
+    Samples GPU memory used, GPU utilization, and SM clock via pynvml every 200 ms in a background thread.
     Safely degrades if pynvml fails or no NVIDIA GPU is available.
     """
 
@@ -70,6 +73,7 @@ class GpuSampler:
         self.thread: Optional[threading.Thread] = None
         self._used_vram_samples: list[float] = []
         self._util_samples: list[float] = []
+        self._sm_clock_samples: list[float] = []
         self._handle: Any = None
         self._nvml_initialized: bool = False
 
@@ -77,6 +81,7 @@ class GpuSampler:
         """Initialize NVML handle and launch background sampling thread."""
         self._used_vram_samples = []
         self._util_samples = []
+        self._sm_clock_samples = []
         try:
             import pynvml
             pynvml.nvmlInit()
@@ -102,14 +107,18 @@ class GpuSampler:
 
                     rates = pynvml.nvmlDeviceGetUtilizationRates(self._handle)
                     self._util_samples.append(float(rates.gpu))
+
+                    clock = pynvml.nvmlDeviceGetClockInfo(self._handle, pynvml.NVML_CLOCK_SM)
+                    self._sm_clock_samples.append(float(clock))
                 except Exception:
                     pass
             time.sleep(self.interval_sec)
 
-    def stop(self) -> tuple[float, float]:
+    def stop(self) -> tuple[float, float, float]:
         """
-        Stop sampling thread and calculate peak VRAM used (GB) and average GPU utilization (%).
-        Returns: (peak_vram_used_gb, avg_gpu_util).
+        Stop sampling thread and calculate peak VRAM used (GB), average GPU utilization (%),
+        and average SM clock (MHz).
+        Returns: (peak_vram_used_gb, avg_gpu_util, avg_sm_clock_mhz).
         """
         self.running = False
         if self.thread is not None:
@@ -126,7 +135,8 @@ class GpuSampler:
 
         peak_vram_gb = round(max(self._used_vram_samples), 3) if self._used_vram_samples else 0.0
         avg_util = round(sum(self._util_samples) / len(self._util_samples), 1) if self._util_samples else 0.0
-        return peak_vram_gb, avg_util
+        avg_sm_clock = round(sum(self._sm_clock_samples) / len(self._sm_clock_samples), 1) if self._sm_clock_samples else 0.0
+        return peak_vram_gb, avg_util, avg_sm_clock
 
 
 def get_gpu_info() -> dict[str, Any]:
@@ -397,11 +407,68 @@ def delete_model(base_url: str, model_tag: str) -> None:
         print(f"Warning: Exception while deleting model {model_tag}: {e}")
 
 
+def get_ac_plugged() -> Any:
+    """
+    Check if AC power is plugged in via psutil.sensors_battery().
+    Returns True/False, or blank "" if unavailable.
+    """
+    try:
+        battery = psutil.sensors_battery()
+        if battery is not None and battery.power_plugged is not None:
+            return bool(battery.power_plugged)
+    except Exception:
+        pass
+    return ""
+
+
+def get_model_file_size_gb(base_url: str, model_tag: str) -> float:
+    """
+    Retrieve model file size in GB from GET /api/tags (bytes -> GB, 2 decimals).
+    """
+    try:
+        resp = requests.get(f"{base_url}/api/tags", timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            for m in data.get("models", []):
+                name = m.get("name", "")
+                model = m.get("model", "")
+                matches = (
+                    name == model_tag
+                    or model == model_tag
+                    or name == f"{model_tag}:latest"
+                    or f"{name}:latest" == model_tag
+                    or (":" not in model_tag and name.split(":")[0] == model_tag)
+                    or (":" not in name and model_tag.split(":")[0] == name)
+                )
+                if matches:
+                    size_bytes = int(m.get("size", 0))
+                    if size_bytes > 0:
+                        return round(size_bytes / (1024 ** 3), 2)
+    except Exception as e:
+        print(f"Warning: Failed to get model file size from /api/tags for {model_tag}: {e}")
+    return 0.0
+
+
 def append_csv_row(csv_path: Path, row: dict[str, Any]) -> None:
     """
     Append a single row to the results CSV file, writing the header if the file does not exist.
+    If the CSV already exists with a different header, refuse to append and tell the user
+    to move the old file to benchmark/archive/.
     """
     file_exists = csv_path.exists() and csv_path.stat().st_size > 0
+    if file_exists:
+        with open(csv_path, mode="r", newline="", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            existing_header = next(reader, None)
+            if existing_header is not None and existing_header != CSV_COLUMNS:
+                archive_dir = SCRIPT_DIR / "archive"
+                print(
+                    f"\nERROR: CSV '{csv_path.name}' already exists with a different header.\n"
+                    f"Refusing to append. Please move the old file to benchmark/archive/:\n"
+                    f"  mkdir -p benchmark/archive && mv {csv_path} {archive_dir}/\n"
+                )
+                sys.exit(1)
+
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with open(csv_path, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
@@ -411,10 +478,11 @@ def append_csv_row(csv_path: Path, row: dict[str, Any]) -> None:
         f.flush()
 
 
-def get_completed_models(csv_path: Path) -> set[str]:
+def get_completed_models(csv_path: Path, expected_rows: int = 6) -> set[str]:
     """
-    Read the existing CSV file (if any) and return the set of model_tags that already
-    have completed rows with an empty error column.
+    Read the existing CSV file (if any). A model counts as complete only if it has at least
+    (number of prompts x runs_per_prompt) rows with an empty error column.
+    Otherwise delete its partial rows and re-run it from scratch.
     """
     completed: set[str] = set()
     if not csv_path.exists() or csv_path.stat().st_size == 0:
@@ -423,13 +491,44 @@ def get_completed_models(csv_path: Path) -> set[str]:
     try:
         with open(csv_path, mode="r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            for row in reader:
-                model_tag = row.get("model_tag", "").strip()
-                err = row.get("error", "").strip()
-                if model_tag and not err:
-                    completed.add(model_tag)
+            fieldnames = reader.fieldnames
+            rows = list(reader)
     except Exception as e:
         print(f"Warning: Could not read existing CSV at {csv_path}: {e}")
+        return completed
+
+    if not rows:
+        return completed
+
+    # Count successful rows (empty error column) per model_tag
+    counts: dict[str, int] = {}
+    for row in rows:
+        tag = row.get("model_tag", "").strip()
+        err = row.get("error", "").strip()
+        if tag and not err:
+            counts[tag] = counts.get(tag, 0) + 1
+
+    # Model counts as complete only if count >= expected_rows
+    completed = {tag for tag, count in counts.items() if count >= expected_rows}
+
+    # Find models that have rows in the CSV but did not complete
+    all_models_in_csv = {row.get("model_tag", "").strip() for row in rows if row.get("model_tag", "").strip()}
+    incomplete_models = all_models_in_csv - completed
+
+    if incomplete_models:
+        print(
+            f"Notice: Removing partial rows for incomplete model(s): {', '.join(sorted(incomplete_models))} "
+            f"(required: {expected_rows} successful rows). They will re-run from scratch."
+        )
+        kept_rows = [row for row in rows if row.get("model_tag", "").strip() not in incomplete_models]
+        try:
+            with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames or CSV_COLUMNS)
+                writer.writeheader()
+                writer.writerows(kept_rows)
+        except Exception as e:
+            print(f"Warning: Failed to rewrite CSV without partial rows: {e}")
+
     return completed
 
 
@@ -444,6 +543,9 @@ def create_error_row(
     model_size_gb: float = 0.0,
     prompt_label: str = "",
     run_idx: int = 0,
+    file_size_gb: float = 0.0,
+    ac_plugged: Any = "",
+    avg_sm_clock_mhz: float = 0.0,
 ) -> dict[str, Any]:
     """
     Construct an error row for the CSV when pull or generation fails.
@@ -472,6 +574,9 @@ def create_error_row(
         "peak_vram_used_gb": 0.0,
         "avg_gpu_util": 0.0,
         "error": error_msg,
+        "file_size_gb": file_size_gb,
+        "ac_plugged": ac_plugged,
+        "avg_sm_clock_mhz": avg_sm_clock_mhz,
     }
 
 
@@ -563,6 +668,27 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
     results_dir = SCRIPT_DIR / "results"
     results_csv_path = results_dir / f"{machine_label}.csv"
 
+    # Startup battery check: if on battery, print a loud warning (do not exit)
+    ac_plugged = get_ac_plugged()
+    if ac_plugged is False:
+        print("\n" + "!" * 80)
+        print("WARNING: Laptop is on battery - results will be unreliable. Plug in and set Best Performance.")
+        print("!" * 80 + "\n")
+
+    # CSV header validation: refuse to append if existing CSV has a different header
+    if results_csv_path.exists() and results_csv_path.stat().st_size > 0:
+        with open(results_csv_path, mode="r", newline="", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            existing_header = next(reader, None)
+            if existing_header is not None and existing_header != CSV_COLUMNS:
+                archive_dir = SCRIPT_DIR / "archive"
+                print(
+                    f"\nERROR: CSV '{results_csv_path.name}' already exists with a different header.\n"
+                    f"Refusing to append. Please move the old file to benchmark/archive/:\n"
+                    f"  mkdir -p benchmark/archive && mv {results_csv_path} {archive_dir}/\n"
+                )
+                sys.exit(1)
+
     print("================================================================================")
     print("LLM Bench - Inference Performance Benchmark")
     print(f"Machine Label      : {machine_label}")
@@ -578,8 +704,9 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
     # Discover initially installed models for cleanup check
     initial_installed = get_installed_models(ollama_url)
 
-    # Check existing CSV for resumability
-    completed_models = get_completed_models(results_csv_path)
+    # Check existing CSV for resumability (model complete only if count >= prompts * runs_per_prompt)
+    expected_rows_per_model = len(PROMPTS) * runs_per_prompt
+    completed_models = get_completed_models(results_csv_path, expected_rows=expected_rows_per_model)
 
     total_models = len(models)
     models_evaluated: list[str] = []
@@ -598,6 +725,7 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
         print(f"\n[{model_idx}/{total_models}] Preparing model: {model_tag}")
 
         pre_existing = is_model_installed(initial_installed, model_tag)
+        file_size_gb = 0.0
 
         # 1. Pull model if not installed
         current_installed = get_installed_models(ollama_url)
@@ -614,16 +742,20 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
                     gpu_bandwidth=gpu_bandwidth,
                     model_tag=model_tag,
                     error_msg=err_msg,
+                    ac_plugged=get_ac_plugged(),
                 )
                 append_csv_row(results_csv_path, error_row)
                 continue
+
+        # Model is available. Read file size from GET /api/tags before any cleanup.
+        file_size_gb = get_model_file_size_gb(ollama_url, model_tag)
 
         # 2. Query details: quantization_level and parameter_size
         params_b = 0.0
         quantization = "unknown"
         try:
             params_b, quantization = get_model_details(ollama_url, model_tag)
-            print(f"Model Specs: params={params_b}B, quantization={quantization}")
+            print(f"Model Specs: params={params_b}B, quantization={quantization}, file_size={file_size_gb}GB")
         except Exception as e:
             err_msg = f"Failed to retrieve model details: {e}"
             print(f"ERROR: {err_msg}")
@@ -633,6 +765,8 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
                 gpu_bandwidth=gpu_bandwidth,
                 model_tag=model_tag,
                 error_msg=err_msg,
+                file_size_gb=file_size_gb,
+                ac_plugged=get_ac_plugged(),
             )
             append_csv_row(results_csv_path, error_row)
             continue
@@ -670,7 +804,7 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
 
                     try:
                         gen_resp = requests.post(gen_url, json=gen_payload, timeout=300)
-                        peak_vram_used_gb, avg_gpu_util = sampler.stop()
+                        peak_vram_used_gb, avg_gpu_util, avg_sm_clock_mhz = sampler.stop()
 
                         if gen_resp.status_code != 200:
                             raise RuntimeError(f"HTTP {gen_resp.status_code}: {gen_resp.text}")
@@ -723,6 +857,9 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
                             "peak_vram_used_gb": peak_vram_used_gb,
                             "avg_gpu_util": avg_gpu_util,
                             "error": "",
+                            "file_size_gb": file_size_gb,
+                            "ac_plugged": get_ac_plugged(),
+                            "avg_sm_clock_mhz": avg_sm_clock_mhz,
                         }
                         append_csv_row(results_csv_path, row)
 
@@ -746,6 +883,8 @@ def run_benchmark(config_path: Path, only_model: Optional[str] = None, cleanup: 
                             quantization=quantization,
                             prompt_label=prompt_label,
                             run_idx=run_idx,
+                            file_size_gb=file_size_gb,
+                            ac_plugged=get_ac_plugged(),
                         )
                         append_csv_row(results_csv_path, error_row)
 
