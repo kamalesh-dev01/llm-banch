@@ -2,10 +2,7 @@ import React from 'react'
 import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 
 /**
- * VerdictBadge displaying compatibility with semantic colors and icons:
- * - recommended: #34d399 (Emerald Green)
- * - minimum: #fbbf24 (Amber)
- * - not_recommended: #f87171 (Rose Red)
+ * VerdictBadge displaying compatibility with semantic colors and icons.
  */
 export default function VerdictBadge({ verdict, className = '' }) {
   if (!verdict) return null

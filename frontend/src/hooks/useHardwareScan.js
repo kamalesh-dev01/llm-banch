@@ -21,7 +21,8 @@ export function useHardwareScan() {
       attempts++
       try {
         const res = await getHardwareScan(token)
-        if (res.data) {
+        // 202 means pending ("still waiting") - never store a pending response as hardware
+        if (res.status === 200 && res.data && res.data.status !== 'pending') {
           setHardware(res.data)
           setPolling(false)
           clearInterval(interval)

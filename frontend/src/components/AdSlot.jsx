@@ -72,7 +72,7 @@ export default function AdSlot({ slot, format = 'inline', className = '' }) {
       ) : (
         /* Development placeholder */
         <div
-          className={`w-full max-w-4xl ${currentConfig.heightClass} rounded-lg border border-dashed border-border/80 bg-surface/50 flex flex-col items-center justify-center text-muted transition hover:border-accent/40`}
+          className={`w-full max-w-4xl ${currentConfig.heightClass} rounded-btn border border-dashed border-line bg-surface-2 flex flex-col items-center justify-center text-muted transition hover:border-primary`}
         >
           <span className="text-xs font-mono font-medium tracking-wide text-muted">
             Ad space &bull; {currentConfig.sizeLabel}

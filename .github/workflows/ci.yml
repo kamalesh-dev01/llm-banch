@@ -1,0 +1,103 @@
+name: CI & Release Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backend-test-and-ml-report:
+    name: Backend Tests & ML Summary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run backend pytest suite
+        run: |
+          python -m pytest backend/tests/ -v
+
+      - name: Publish ML Model Card & Metrics to Step Summary
+        run: |
+          python scripts/publish_ml_summary.py
+
+  frontend-build:
+    name: Frontend Build & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend production bundle
+        working-directory: frontend
+        run: npm run build
+
+  build-windows-scanner:
+    name: Build & Package Windows Scanner
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install scanner dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scanner/requirements.txt
+          pip install pyinstaller pytest
+
+      - name: Run scanner unit tests
+        run: |
+          python -m pytest scanner/test_scanner_core.py -v
+
+      - name: Build Scanner Executable & Generate Release Notes
+        id: build_scanner
+        run: |
+          python scripts/ci_scanner_build.py --output-notes scanner_release_notes.md
+
+      - name: Upload Scanner Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LLMBench-Scanner-windows
+          path: scanner/dist/LLMBench-Scanner.exe
+          if-no-files-found: error
+
+      - name: Create GitHub Release (Tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: scanner_release_notes.md
+          files: scanner/dist/LLMBench-Scanner.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

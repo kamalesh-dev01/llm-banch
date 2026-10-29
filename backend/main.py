@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, Base, get_db
 from models import Model, ModelQuant
-from routers import models_router, hardware, recommend, benchmark
+from routers import models_router, hardware, recommend, benchmark, results_router
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +30,38 @@ async def lifespan(app: FastAPI):
     # Create all tables in the database if they don't exist
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables verified/created.")
+
+    # Verify expected production migration columns exist
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        expected_schema = {
+            "hardware_sessions": ["status", "expires_at", "vram_source"],
+            "models": [
+                "tagline", "about", "publisher", "released_at",
+                "hf_updated_at", "languages", "capabilities", "hf_tags",
+                "hf_url", "ollama_library_url", "enriched_at", "enriched_from",
+                "quality_source", "quality_n", "quality_ci"
+            ],
+            "benchmark_results": [
+                "machine_label", "ram_gb", "offload_fraction",
+                "peak_vram_gb", "measured_at", "ac_plugged", "n_runs"
+            ]
+        }
+        tables = inspector.get_table_names()
+        for table, expected_cols in expected_schema.items():
+            if table in tables:
+                existing_cols = {c["name"] for c in inspector.get_columns(table)}
+                missing = [col for col in expected_cols if col not in existing_cols]
+                if missing:
+                    logger.warning(
+                        f"[SCHEMA WARNING] Table '{table}' is missing expected columns: {missing}. "
+                        "Run migrations in order against DATABASE_URL: "
+                        "1) migrate_scan_sessions.py, 2) migrate_model_fields.py, 3) migrate_quality_source.py"
+                    )
+    except Exception as e:
+        logger.warning(f"Could not verify database schema columns on startup: {e}")
+
     yield
     logger.info("Shutting down LLM Bench API...")
 
@@ -56,6 +88,7 @@ app.add_middleware(
 # Register routers
 app.include_router(models_router.router, prefix="/api", tags=["models"])
 app.include_router(hardware.router, prefix="/api", tags=["hardware"])
+app.include_router(results_router.router, prefix="/api", tags=["results"])
 app.include_router(recommend.router, prefix="/api", tags=["recommend"])
 app.include_router(benchmark.router, prefix="/api", tags=["benchmark"])
 

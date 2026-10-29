@@ -57,12 +57,24 @@ def get_recommendations(
             rec_ram=best_quant.rec_ram_gb
         )
         
+        import json
+        parsed_tasks = []
+        if model.tasks:
+            try:
+                parsed_tasks = json.loads(model.tasks) if model.tasks.startswith("[") else [t.strip() for t in model.tasks.split(",") if t.strip()]
+            except Exception:
+                parsed_tasks = [t.strip() for t in model.tasks.split(",") if t.strip()]
+
         results.append({
             "model_id": model.id,
             "name": model.name,
             "ollama_tag": model.ollama_tag,
             "family": model.family,
             "params_b": model.params_b,
+            "description": model.description or f"{model.name} {model.params_b}B parameters model",
+            "tasks": parsed_tasks,
+            "downloads": model.downloads_last_month or 0,
+            "downloads_last_month": model.downloads_last_month or 0,
             "quality_score": model.quality_score,
             "best_quant": best_quant.quant,
             "best_quant_size_gb": best_quant.size_gb,

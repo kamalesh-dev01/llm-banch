@@ -11,8 +11,7 @@ export default function StatCounter({ endValue, suffix = '', duration = 1.6, lab
   const hasAnimated = useRef(false)
 
   useEffect(() => {
-    if (isInView && !hasAnimated.current) {
-      hasAnimated.current = true
+    if (isInView && endValue > 0) {
       let startTime = null
       const start = 0
       const end = parseInt(endValue, 10) || 0

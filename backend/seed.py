@@ -4,6 +4,7 @@ Drops and recreates all tables to ensure new columns exist.
 """
 
 import os
+import sys
 import json
 from dotenv import load_dotenv
 
@@ -16,6 +17,12 @@ def seed_database():
     # 1. Load .env (DATABASE_URL)
     load_dotenv()
     
+    # Guard: Never run seed.py in CI or on Render (it drops all tables)
+    if os.environ.get("ALLOW_DROP") != "1":
+        print("[ERROR] seed.py drops and recreates all database tables! It is guarded and will not run unless ALLOW_DROP=1 is set.")
+        print("For production deployments, apply the idempotent migrations in order: migrate_scan_sessions.py, migrate_model_fields.py, migrate_quality_source.py")
+        sys.exit(1)
+
     # 2. Recreate tables to ensure schema matches models.py
     print("Recreating database tables...")
     Base.metadata.drop_all(bind=engine)

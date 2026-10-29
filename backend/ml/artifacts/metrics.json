@@ -1,0 +1,54 @@
+{
+  "selected_model": "PhysicsLinear",
+  "n_configs": 4,
+  "n_configs_gpu": 4,
+  "n_configs_cpu": 1,
+  "n_offload": 1,
+  "cpu_term_source": "prior",
+  "footprint_map_source": "default+margin",
+  "models_compared": {
+    "MeanBaseline": {
+      "mae_tps": 34.5,
+      "mape_pct": 52.96,
+      "r2": -0.8143
+    },
+    "TheoryBaseline": {
+      "mae_tps": 46.24,
+      "mape_pct": 50.64,
+      "r2": -4.2591
+    },
+    "PhysicsLinear": {
+      "mae_tps": 33.62,
+      "mape_pct": 42.01,
+      "r2": -1.5036
+    },
+    "RandomForest": {
+      "mae_tps": 32.3,
+      "mape_pct": 48.33,
+      "r2": -0.3345
+    }
+  },
+  "winner_metrics": {
+    "mae_tps": 33.62,
+    "mape_pct": 42.01,
+    "r2": -1.5036
+  },
+  "reserve_gb": 1.85,
+  "footprint_params": {
+    "a": 1.1,
+    "b": 0.1,
+    "source": "default+margin"
+  },
+  "residual_std_ms": 9.71,
+  "coeff_gpu": 1000.0,
+  "coeff_cpu": 1666.7,
+  "intercept": 1.78,
+  "training_ranges": {
+    "min_offload_fraction": 0.793,
+    "max_offload_fraction": 1.0,
+    "max_x_cpu": 0.014,
+    "min_footprint": 0.45,
+    "max_footprint": 2.71
+  },
+  "trained_at": "2026-10-29T05:09:18.199045+00:00"
+}

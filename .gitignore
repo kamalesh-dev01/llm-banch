@@ -14,3 +14,5 @@ venv/
 *.spec
 .DS_Store
 run.txt
+scratch/
+.ua/

@@ -8,5 +8,10 @@ requests
 beautifulsoup4
 huggingface-hub
 psutil
-pynvml
+nvidia-ml-py
 aiofiles
+scikit-learn
+pandas
+numpy
+joblib
+matplotlib

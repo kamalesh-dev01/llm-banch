@@ -1000,7 +1000,7 @@
       "tasks": [
         "chat"
       ],
-      "hf_model_id": "cognitivecomputations/dolphin-2.9-llama3-8b",
+      "hf_model_id": "cognitivecomputations/dolphin-2.8-mistral-7b-v02",
       "ollama_tag": "dolphin-mistral",
       "description": "1.8M\n\u00a0Downloads\n\n\n\n\n\nUpdated\u00a0\n2 years ago",
       "quants": [
@@ -1015,8 +1015,8 @@
           "est_tps_mid": 55.0,
           "est_tps_cpu": 8.0,
           "ollama_url": "ollama pull dolphin-mistral:q4_k_m",
-          "hf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-8b",
-          "gguf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-8b/resolve/main/dolphin-mistral-Q4_K_M.gguf"
+          "hf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.8-mistral-7b-v02",
+          "gguf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.8-mistral-7b-v02/resolve/main/dolphin-2.8-mistral-7b-v02-Q4_K_M.gguf"
         },
         {
           "quant": "Q8_0",
@@ -1029,8 +1029,8 @@
           "est_tps_mid": 35.0,
           "est_tps_cpu": 4.0,
           "ollama_url": "ollama pull dolphin-mistral:q8_0",
-          "hf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-8b",
-          "gguf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.9-llama3-8b/resolve/main/dolphin-mistral-Q8_0.gguf"
+          "hf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.8-mistral-7b-v02",
+          "gguf_url": "https://huggingface.co/cognitivecomputations/dolphin-2.8-mistral-7b-v02/resolve/main/dolphin-2.8-mistral-7b-v02-Q8_0.gguf"
         }
       ],
       "downloads_last_month": 4040,

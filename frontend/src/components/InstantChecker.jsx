@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { getGpus, submitHardwareScan } from '../api/client'
 import useHardwareStore from '../store/hardwareStore'
-import { Cpu, Search, Check, ChevronDown, Terminal, Sparkles, Loader2 } from 'lucide-react'
+import { Cpu, Search, Check, ChevronDown, Download, Sparkles, Loader2 } from 'lucide-react'
 
 // Comprehensive fallback list if backend is momentarily unreachable
 const DEFAULT_GPUS = [
@@ -117,7 +117,7 @@ export default function InstantChecker() {
 
       if (token) {
         setToken(token)
-        navigate(`/scan-result?token=${token}`)
+        navigate(`/results/${token}`)
       } else {
         throw new Error('No token returned from scan')
       }
@@ -130,25 +130,28 @@ export default function InstantChecker() {
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto glass glow-border p-6 md:p-8 rounded-2xl shadow-2xl relative">
+    <div 
+      id="checker" 
+      className="w-full max-w-xl mx-auto bg-surface border border-line p-6 sm:p-8 rounded-card shadow-card relative text-left"
+    >
       {/* Card Header Badge */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+          <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center">
             <Sparkles size={15} />
           </div>
-          <span className="font-heading font-bold text-sm tracking-wide text-text uppercase">
+          <span className="font-heading font-bold text-sm tracking-tight text-text">
             Instant Hardware Checker
           </span>
         </div>
-        <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-recommended/15 text-recommended border border-recommended/30">
+        <span className="text-xs font-mono px-2.5 py-0.5 rounded-pill bg-success-soft text-success border border-success/20 font-medium">
           No download needed
         </span>
       </div>
 
       <div className="space-y-5">
         {/* GPU Selector with Search */}
-        <div className="relative text-left" ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef}>
           <label className="block text-xs font-mono uppercase tracking-wider text-muted mb-2 font-semibold">
             1. Select Your GPU
           </label>
@@ -166,14 +169,15 @@ export default function InstantChecker() {
                 }
               }}
               onFocus={() => setIsDropdownOpen(true)}
-              className="w-full bg-surface border border-border rounded-xl px-4 py-3 pl-10 text-sm text-text font-mono placeholder:text-muted/60 focus:outline-none focus:border-accent transition shadow-inner"
+              className="w-full bg-surface-2 border border-line rounded-btn px-4 py-3 pl-10 text-sm text-text font-mono placeholder:text-muted/60 focus:outline-none focus:border-primary transition shadow-sm"
             />
             <Search size={16} className="absolute left-3.5 top-3.5 text-muted pointer-events-none" />
             
             <button
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="absolute right-3.5 top-3.5 text-muted hover:text-text transition"
+              className="absolute right-3.5 top-3.5 text-muted hover:text-text transition cursor-pointer"
+              aria-label="Toggle GPU list"
             >
               <ChevronDown size={16} className={`transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -181,17 +185,17 @@ export default function InstantChecker() {
 
           {/* Search Dropdown Results */}
           {isDropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 max-h-56 overflow-y-auto bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 divide-y divide-border/50">
+            <div className="absolute left-0 right-0 top-full mt-1.5 max-h-56 overflow-y-auto bg-surface border border-line rounded-btn shadow-card z-50 divide-y divide-line">
               {filteredGpus.length > 0 ? (
                 filteredGpus.map((gpu) => (
                   <button
                     key={gpu.name}
                     type="button"
                     onClick={() => handleSelectGpu(gpu)}
-                    className="w-full px-4 py-2.5 text-left flex items-center justify-between hover:bg-elevated transition cursor-pointer text-xs font-mono"
+                    className="w-full px-4 py-2.5 text-left flex items-center justify-between hover:bg-surface-2 transition cursor-pointer text-xs font-mono"
                   >
                     <span className="font-semibold text-text">{gpu.name}</span>
-                    <span className="px-2 py-0.5 rounded bg-elevated border border-border text-accent font-bold">
+                    <span className="px-2 py-0.5 rounded bg-surface-2 border border-line text-primary font-bold">
                       {gpu.vram_gb} GB VRAM
                     </span>
                   </button>
@@ -205,7 +209,7 @@ export default function InstantChecker() {
           )}
 
           {selectedGpu && (
-            <div className="mt-1.5 flex items-center gap-1.5 text-xs font-mono text-recommended">
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs font-mono text-success">
               <Check size={12} />
               <span>Selected: {selectedGpu.name} &bull; {selectedGpu.vram_gb} GB Dedicated VRAM</span>
             </div>
@@ -213,7 +217,7 @@ export default function InstantChecker() {
         </div>
 
         {/* System RAM Selector */}
-        <div className="text-left">
+        <div>
           <label className="block text-xs font-mono uppercase tracking-wider text-muted mb-2 font-semibold">
             2. System RAM
           </label>
@@ -223,10 +227,10 @@ export default function InstantChecker() {
                 key={ram}
                 type="button"
                 onClick={() => setSelectedRam(ram)}
-                className={`py-2.5 rounded-xl border text-xs font-mono font-bold transition cursor-pointer flex flex-col items-center justify-center ${
+                className={`py-2.5 rounded-btn border text-xs font-mono font-bold transition cursor-pointer flex flex-col items-center justify-center btn-press ${
                   selectedRam === ram
-                    ? 'bg-accent/15 border-accent text-accent shadow-sm'
-                    : 'bg-surface border-border text-muted hover:border-border/80 hover:text-text'
+                    ? 'bg-primary text-white border-primary shadow-soft'
+                    : 'bg-surface-2 border-line text-muted hover:border-line hover:text-text'
                 }`}
               >
                 <span>{ram} GB</span>
@@ -237,7 +241,7 @@ export default function InstantChecker() {
 
         {/* Error notification if any */}
         {errorMsg && (
-          <div className="p-2.5 rounded-lg bg-not-recommended/10 border border-not-recommended/30 text-not-recommended text-xs font-mono">
+          <div className="p-2.5 rounded-btn bg-danger-soft border border-danger/30 text-danger text-xs font-mono">
             {errorMsg}
           </div>
         )}
@@ -248,31 +252,31 @@ export default function InstantChecker() {
             type="button"
             disabled={isSubmitting}
             onClick={handleCheck}
-            className="w-full py-3.5 px-6 rounded-xl bg-accent text-bg font-heading font-bold text-base hover:bg-accent/90 transition shadow-lg shadow-accent/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-btn bg-primary hover:bg-primary-hover text-white font-heading font-bold text-sm transition shadow-soft hover:shadow-hover flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 btn-press"
           >
             {isSubmitting ? (
               <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Evaluating Hardware...</span>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Checking compatibility...</span>
               </>
             ) : (
               <>
-                <Cpu size={18} />
+                <Cpu size={16} />
                 <span>Check My Hardware</span>
               </>
             )}
           </button>
         </div>
 
-        {/* Alternative Link for Native Scanner */}
-        <div className="pt-2">
-          <a
-            href="http://localhost:8000/api/scanner/download"
-            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-accent font-mono transition"
+        {/* Link to Native Scanner */}
+        <div className="pt-1 text-center">
+          <Link
+            to="/scanner"
+            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary font-mono transition"
           >
-            <Terminal size={12} />
+            <Download size={13} />
             <span>Want exact automated detection? Download the scanner</span>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

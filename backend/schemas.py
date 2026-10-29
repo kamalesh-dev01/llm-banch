@@ -51,22 +51,65 @@ class ModelListItem(ModelBase):
     likes: int
     min_vram: float
     quant_count: int
+    tagline: Optional[str] = None
+    capabilities: Optional[str] = None
+    publisher: Optional[str] = None
+    released_at: Optional[datetime] = None
+    quality_source: Optional[str] = None
+    quality_n: Optional[int] = None
+    quality_ci: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ModelResponse(ModelBase):
-    """Schema for returning a model along with its quantizations."""
+    """Schema for returning a model along with its quantizations and rich metadata."""
     quality_score: float
     downloads_last_month: int
     likes: int
-    quants: List[ModelQuantResponse]
+    tagline: Optional[str] = None
+    about: Optional[str] = None
+    publisher: Optional[str] = None
+    released_at: Optional[datetime] = None
+    hf_updated_at: Optional[datetime] = None
+    languages: Optional[str] = None
+    capabilities: Optional[str] = None
+    hf_tags: Optional[str] = None
+    hf_url: Optional[str] = None
+    ollama_library_url: Optional[str] = None
+    enriched_at: Optional[datetime] = None
+    enriched_from: Optional[str] = None
+    quality_source: Optional[str] = None
+    quality_n: Optional[int] = None
+    quality_ci: Optional[float] = None
+    quants: List[ModelQuantResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BenchmarkResultResponse(BaseModel):
+    """Schema for returning measured benchmark data."""
+    id: int
+    model_id: int
+    machine_label: Optional[str] = None
+    gpu_name: Optional[str] = None
+    vram_gb: Optional[float] = None
+    ram_gb: Optional[float] = None
+    quant: str
+    tokens_per_sec: float
+    ttft_ms: Optional[int] = None
+    offload_fraction: Optional[float] = None
+    peak_vram_gb: Optional[float] = None
+    source: str = "measured"
+    measured_at: Optional[datetime] = None
+    n_runs: Optional[int] = 1
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class HardwareScanRequest(BaseModel):
     """Schema for submitting hardware scan results."""
+    token: Optional[str] = None
     gpu_name: str
     vram_gb: float
     ram_gb: float
@@ -75,6 +118,13 @@ class HardwareScanRequest(BaseModel):
     os: str
     disk_total_gb: float = 0.0
     disk_free_gb: float = 0.0
+
+
+class ScanSessionCreateResponse(BaseModel):
+    """Schema for creating a pending hardware scan session."""
+    token: str
+    status: str = "pending"
+    expires_at: datetime
 
 
 class HardwareScanResponse(BaseModel):
@@ -104,14 +154,17 @@ class BenchmarkResultCreate(BaseModel):
 class HardwareScanDetailResponse(BaseModel):
     """Schema for returning detailed hardware scan session data."""
     token: str
-    gpu_name: str
-    vram_gb: float
-    ram_gb: float
-    cpu_name: str
-    cpu_cores: int
-    os: str
-    disk_total_gb: float = 0.0
-    disk_free_gb: float = 0.0
+    gpu_name: Optional[str] = None
+    vram_gb: Optional[float] = None
+    ram_gb: Optional[float] = None
+    cpu_name: Optional[str] = None
+    cpu_cores: Optional[int] = None
+    os: Optional[str] = None
+    disk_total_gb: Optional[float] = 0.0
+    disk_free_gb: Optional[float] = 0.0
+    status: Optional[str] = "complete"
+    vram_source: Optional[str] = "scanner"
+    expires_at: Optional[datetime] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -122,6 +175,36 @@ class ExtendedVerdictResponse(VerdictResponse):
     recommended_quant: str
     est_tps: float
     ollama_command: str
+    est_tps_ml: Optional[float] = None
+    tps_range: Optional[List[float]] = None
+    offload_fraction_ml: Optional[float] = None
+    prediction_source: str = "heuristic"
+    in_range: Optional[bool] = True
+
+
+class FilterCountItem(BaseModel):
+    value: str
+    count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RangeItem(BaseModel):
+    min: float
+    max: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FiltersResponse(BaseModel):
+    families: List[FilterCountItem]
+    tasks: List[FilterCountItem]
+    capabilities: List[str]
+    licenses: List[str]
+    params: RangeItem
+    vram: RangeItem
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LeaderboardItem(BaseModel):
@@ -135,5 +218,12 @@ class LeaderboardItem(BaseModel):
     min_vram_gb: float
     avg_tps_low: float
     metric_value: float
+    quality_source: Optional[str] = None
+    quality_n: Optional[int] = None
+    quality_ci: Optional[float] = None
+    gpu_name: Optional[str] = None
+    quant: Optional[str] = None
+    measured_at: Optional[datetime] = None
+    n_runs: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

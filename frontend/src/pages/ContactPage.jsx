@@ -1,4 +1,5 @@
 import React from 'react'
+import { Helmet } from 'react-helmet-async'
 import { Mail, MessageSquare, Send } from 'lucide-react'
 
 function GithubIcon({ size = 14, className = "" }) {
@@ -14,62 +15,72 @@ export default function ContactPage() {
   const contactEmail = "support@llmbench.local"
 
   return (
-    <div className="max-w-2xl mx-auto py-12">
-      {/* Header */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-mono mb-4">
-          <Mail size={14} />
-          <span>Get in Touch</span>
-        </div>
-        <h1 className="text-4xl font-heading font-bold text-text mb-3">
-          Contact LLM Bench
-        </h1>
-        <p className="text-muted text-sm max-w-md mx-auto">
-          Have feedback on model benchmarks, compatibility inaccuracies, or partnership inquiries? Send us a direct email.
-        </p>
-      </div>
+    <>
+      <Helmet>
+        <title>Contact — LLM Bench</title>
+        <meta
+          name="description"
+          content="Contact the LLM Bench maintainers with questions, benchmark data, or model corrections."
+        />
+      </Helmet>
 
-      {/* Main Mailto Card */}
-      <div className="glass p-8 text-center space-y-6 glow-border">
-        <div className="w-16 h-16 rounded-2xl bg-elevated border border-border flex items-center justify-center mx-auto text-accent shadow-inner">
-          <MessageSquare size={32} />
-        </div>
-
-        <div>
-          <h2 className="text-xl font-heading font-semibold text-text mb-2">
-            Direct Developer Inbox
-          </h2>
-          <p className="text-xs text-muted max-w-sm mx-auto leading-relaxed">
-            We respond to benchmark submissions and model correction pull requests within 2 business days.
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl py-12 pb-16">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-primary-soft text-primary text-xs font-mono mb-4">
+            <Mail size={14} />
+            <span>Get in Touch</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-text mb-3">
+            Contact LLM Bench
+          </h1>
+          <p className="text-muted text-sm max-w-md mx-auto">
+            Have questions about model benchmarks, compatibility inaccuracies, or suggestions? Send us an email.
           </p>
         </div>
 
-        <div className="p-4 bg-surface rounded-lg border border-border font-mono text-sm text-text select-all">
-          {contactEmail}
-        </div>
+        {/* Main Mailto Card */}
+        <div className="bg-surface border border-line rounded-card p-8 text-center space-y-6 shadow-soft">
+          <div className="w-16 h-16 rounded-2xl bg-surface-2 border border-line flex items-center justify-center mx-auto text-primary">
+            <MessageSquare size={30} />
+          </div>
 
-        <div>
-          <a
-            href={`mailto:${contactEmail}?subject=LLM%20Bench%20Feedback`}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-accent text-bg font-semibold hover:bg-accent/90 transition shadow-lg shadow-accent/20"
-          >
-            <Send size={16} />
-            <span>Open Email Client</span>
-          </a>
-        </div>
+          <div>
+            <h2 className="text-lg font-bold text-text mb-2">
+              Developer &amp; Community Inbox
+            </h2>
+            <p className="text-xs text-muted max-w-sm mx-auto leading-relaxed">
+              We review benchmark logs, accuracy reports, and model correction requests regularly.
+            </p>
+          </div>
 
-        <div className="pt-6 border-t border-border flex items-center justify-center gap-6 text-xs text-muted">
-          <a 
-            href="https://github.com" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="hover:text-accent transition flex items-center gap-1.5"
-          >
-            <GithubIcon size={14} />
-            <span>Report on GitHub</span>
-          </a>
+          <div className="p-4 bg-surface-2 rounded-btn border border-line font-mono text-sm text-text select-all">
+            {contactEmail}
+          </div>
+
+          <div>
+            <a
+              href={`mailto:${contactEmail}?subject=LLM%20Bench%20Feedback`}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-btn bg-primary hover:bg-primary-hover text-white font-medium text-sm transition shadow-soft btn-press"
+            >
+              <Send size={15} />
+              <span>Open Email Client</span>
+            </a>
+          </div>
+
+          <div className="pt-6 border-t border-line flex items-center justify-center gap-6 text-xs text-muted">
+            <a 
+              href="https://github.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-primary transition flex items-center gap-1.5"
+            >
+              <GithubIcon size={14} />
+              <span>Report on GitHub</span>
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

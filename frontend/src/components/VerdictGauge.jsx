@@ -3,23 +3,23 @@ import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 
 /**
  * Circular Verdict Gauge
- * Renders an SVG ring with glowing accent color matching the hardware verdict.
+ * Renders an SVG ring with accent color matching the hardware verdict.
  */
-export default function VerdictGauge({ verdict, estTps }) {
+export default function VerdictGauge({ verdict, estTps, inRange = true }) {
   const normalized = (verdict || '').toLowerCase().replace('-', '_')
 
-  let strokeColor = '#f87171' // not_recommended
+  let strokeColor = 'var(--color-danger)'
   let label = 'Not Recommended'
   let Icon = XCircle
   let percentage = 33
 
   if (normalized === 'recommended') {
-    strokeColor = '#34d399'
+    strokeColor = 'var(--color-success)'
     label = 'Recommended'
     Icon = CheckCircle2
     percentage = 100
   } else if (normalized === 'minimum') {
-    strokeColor = '#fbbf24'
+    strokeColor = 'var(--color-warning)'
     label = 'Minimum Fit'
     Icon = AlertTriangle
     percentage = 66
@@ -39,7 +39,7 @@ export default function VerdictGauge({ verdict, estTps }) {
             cx="80"
             cy="80"
             r={radius}
-            stroke="#1f232b"
+            stroke="var(--color-line)"
             strokeWidth={strokeWidth}
             fill="transparent"
           />
@@ -56,7 +56,6 @@ export default function VerdictGauge({ verdict, estTps }) {
             fill="transparent"
             style={{
               transition: 'stroke-dashoffset 0.8s ease-in-out',
-              filter: `drop-shadow(0 0 6px ${strokeColor}40)`
             }}
           />
         </svg>
@@ -68,9 +67,15 @@ export default function VerdictGauge({ verdict, estTps }) {
             {label}
           </span>
           {estTps ? (
-            <span className="font-mono text-xs text-accent mt-1">
-              ~{estTps} tok/s
-            </span>
+            inRange === false ? (
+              <span className="font-mono text-[10px] text-warning mt-1 px-1 font-semibold leading-tight text-center">
+                Rough estimate - outside range
+              </span>
+            ) : (
+              <span className="font-mono text-xs text-primary font-bold mt-1">
+                ~{estTps} tok/s
+              </span>
+            )
           ) : (
             <span className="font-mono text-[11px] text-muted mt-1">
               {normalized === 'recommended' ? 'Full Offload' : 'Partial / CPU'}
