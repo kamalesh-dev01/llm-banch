@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { getScannerInfo } from '../api/client'
+import { getScannerInfo, API_BASE_URL } from '../api/client'
 import Reveal from '../components/motion/Reveal'
 import {
   Download,
@@ -49,7 +49,7 @@ export default function ScannerPage() {
     }
   }
 
-  const downloadUrl = '/api/scanner/download'
+  const downloadUrl = `${API_BASE_URL}/api/scanner/download`
   const isAvailable = scannerInfo?.available !== false
 
   return (

@@ -6,7 +6,8 @@ import {
   createScanSession, 
   getScannerInfo, 
   getHardwareScan, 
-  getModels 
+  getModels,
+  API_BASE_URL
 } from '../api/client'
 import useHardwareStore from '../store/hardwareStore'
 import InstantChecker from '../components/InstantChecker'
@@ -197,8 +198,8 @@ export default function CheckWizardPage() {
   }
 
   const downloadUrl = sessionToken 
-    ? `http://127.0.0.1:8000/api/scanner/download?token=${sessionToken}`
-    : `http://127.0.0.1:8000/api/scanner/download`
+    ? `${API_BASE_URL}/api/scanner/download?token=${sessionToken}`
+    : `${API_BASE_URL}/api/scanner/download`
 
   return (
     <div className="min-h-screen bg-bg text-text py-10 sm:py-14">
