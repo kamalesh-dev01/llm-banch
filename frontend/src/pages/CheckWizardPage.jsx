@@ -562,14 +562,21 @@ export default function CheckWizardPage() {
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-card bg-surface-2 border border-line space-y-1.5">
-                      <div className="w-6 h-6 rounded-full bg-primary-soft text-primary font-mono text-xs font-bold flex items-center justify-center">
+                    <div className="p-4 rounded-card bg-warning-soft/50 border border-warning/30 space-y-2">
+                      <div className="w-6 h-6 rounded-full bg-warning/20 text-warning font-mono text-xs font-bold flex items-center justify-center">
                         2
                       </div>
-                      <div className="font-semibold text-xs text-text">Windows SmartScreen</div>
+                      <div className="font-semibold text-xs text-warning flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87L13.637 3.59a1.914 1.914 0 0 0-3.274 0z"/><path d="M12 17h.01"/></svg>
+                        Windows SmartScreen — this is normal!
+                      </div>
                       <p className="text-[11px] text-muted leading-relaxed">
-                        If Windows warns, click <strong className="text-text">More info</strong>, then click <strong className="text-text">Run anyway</strong>.
+                        Since the scanner is brand new, Windows shows a warning. It's safe — the code is open-source.
                       </p>
+                      <ol className="text-[11px] text-muted leading-relaxed list-decimal list-inside space-y-1">
+                        <li>Click the small <strong className="text-text">"More info"</strong> text on the warning</li>
+                        <li>Click the <strong className="text-text">"Run anyway"</strong> button that appears</li>
+                      </ol>
                     </div>
 
                     <div className="p-4 rounded-card bg-surface-2 border border-line space-y-1.5">

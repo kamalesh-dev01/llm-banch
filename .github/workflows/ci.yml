@@ -29,8 +29,9 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run backend pytest suite
+        working-directory: backend
         run: |
-          python -m pytest backend/tests/ -v
+          python -m pytest tests/ -v
 
       - name: Publish ML Model Card & Metrics to Step Summary
         run: |

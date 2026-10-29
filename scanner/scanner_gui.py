@@ -67,7 +67,7 @@ def self_delete_if_needed():
     CREATE_NO_WINDOW = 0x08000000
     DETACHED_PROCESS = 0x00000008
     flags = CREATE_NO_WINDOW | DETACHED_PROCESS
-    cmd = f'cmd /c ping 127.0.0.1 -n 3 > nul & del /f /q "{exe_path}"'
+    cmd = f'cmd /c timeout /t 3 /nobreak > nul & del /f /q "{exe_path}"'
     try:
         subprocess.Popen(
             cmd,
@@ -389,8 +389,9 @@ class ScannerApp(ctk.CTk):
         )
         close_btn.pack(side="left", padx=6)
 
-        # Automatically open site after 1.5 seconds
-        self.auto_open_job = self.after(1500, self.open_results_url)
+        # NOTE: Do NOT auto-open browser — the website's polling mechanism
+        # already auto-navigates to the results page when the scan completes.
+        # self.auto_open_job = self.after(1500, self.open_results_url)
 
     def show_error_state(self, error_message: str):
         """Displays friendly error state with retry and copy buttons."""

@@ -301,7 +301,8 @@ def test_seed_guard_without_allow_drop():
     """seed.py must refuse to run and exit with code 1 unless ALLOW_DROP=1."""
     env = os.environ.copy()
     env.pop("ALLOW_DROP", None)
-    res = subprocess.run([sys.executable, "backend/seed.py"], capture_output=True, text=True, env=env)
+    seed_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "seed.py")
+    res = subprocess.run([sys.executable, seed_path], capture_output=True, text=True, env=env)
     assert res.returncode == 1
     assert "ALLOW_DROP=1" in res.stdout or "ALLOW_DROP=1" in res.stderr
 
