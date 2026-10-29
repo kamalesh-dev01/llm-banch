@@ -195,19 +195,35 @@ def test_expired_session_410():
 
 def test_download_scanner():
     """Test GET /api/scanner/download serves token-customized and generic filenames."""
-    # 1. Create pending session
-    resp = client.post("/api/scan-sessions")
-    token = resp.json()["token"]
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+    os.makedirs(static_dir, exist_ok=True)
+    dummy_exe = os.path.join(static_dir, "LLMBench-Scanner.exe")
+    created = False
+    if not os.path.exists(dummy_exe):
+        with open(dummy_exe, "wb") as f:
+            f.write(b"MZ_DUMMY_BINARY_DATA_FOR_UNIT_TESTS")
+        created = True
 
-    # 2. Download with pending token
-    res_token = client.get(f"/api/scanner/download?token={token}")
-    assert res_token.status_code == 200
-    assert f'filename="LLMBench-Scanner-{token}.exe"' in res_token.headers.get("content-disposition", "")
+    try:
+        # 1. Create pending session
+        resp = client.post("/api/scan-sessions")
+        token = resp.json()["token"]
 
-    # 3. Download without token or with nonexistent token
-    res_generic = client.get("/api/scanner/download")
-    assert res_generic.status_code == 200
-    assert 'filename="LLMBench-Scanner.exe"' in res_generic.headers.get("content-disposition", "")
+        # 2. Download with pending token
+        res_token = client.get(f"/api/scanner/download?token={token}")
+        assert res_token.status_code == 200
+        assert f'filename="LLMBench-Scanner-{token}.exe"' in res_token.headers.get("content-disposition", "")
+
+        # 3. Download without token or with nonexistent token
+        res_generic = client.get("/api/scanner/download")
+        assert res_generic.status_code == 200
+        assert 'filename="LLMBench-Scanner.exe"' in res_generic.headers.get("content-disposition", "")
+    finally:
+        if created and os.path.exists(dummy_exe):
+            try:
+                os.remove(dummy_exe)
+            except OSError:
+                pass
 
 
 def test_download_scanner_production_with_mocked_url(monkeypatch, tmp_path):
