@@ -54,6 +54,7 @@ export default function CheckWizardPage() {
 
   // Polling state for Step 3
   const [pollStatus, setPollStatus] = useState('waiting') // 'waiting' | 'success' | 'expired' | 'error'
+  const [scannedHardware, setScannedHardware] = useState(null)
   const [timeLeftSec, setTimeLeftSec] = useState(1800)
   const pollTimerRef = useRef(null)
 
@@ -146,19 +147,20 @@ export default function CheckWizardPage() {
 
         if (res.status === 200 && res.data?.status === 'complete') {
           // Hardware successfully scanned and submitted!
+          setScannedHardware(res.data)
           setPollStatus('success')
           setHardware(res.data)
           setToken(sessionToken)
           clearInterval(intervalTimer)
 
-          // Auto-advance to results
+          // Auto-advance to results after brief visual confirmation
           setTimeout(() => {
             if (selectedModelId) {
               navigate(`/results/${sessionToken}/${selectedModelId}`)
             } else {
               navigate(`/results/${sessionToken}`)
             }
-          }, 1200)
+          }, 1600)
         }
       } catch (err) {
         if (!isMounted) return
@@ -581,20 +583,22 @@ export default function CheckWizardPage() {
                     </div>
                   </div>
 
-                  {/* Live Waiting Pulse Card */}
-                  <div className="p-6 rounded-card bg-surface-2 border border-line text-center space-y-4">
+                  {/* Live Waiting Pulse Card & Real-time Inspection Checklist */}
+                  <div className="p-6 rounded-card bg-surface-2 border border-line text-center space-y-5">
                     {pollStatus === 'waiting' && (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <div className="relative inline-flex items-center justify-center">
                           <span className="w-4 h-4 rounded-full bg-primary animate-ping absolute" />
                           <span className="w-3.5 h-3.5 rounded-full bg-primary relative" />
                         </div>
-                        <div className="text-base font-bold text-text">
-                          Waiting for the scanner...
+                        <div>
+                          <div className="text-base font-bold text-text">
+                            Waiting for scanner signal...
+                          </div>
+                          <p className="text-xs text-muted max-w-md mx-auto mt-1">
+                            Listening on session <code className="font-mono text-primary bg-surface px-1.5 py-0.5 rounded">{sessionToken}</code>
+                          </p>
                         </div>
-                        <p className="text-xs text-muted max-w-md mx-auto">
-                          Listening for your hardware specs on session <code className="font-mono text-primary bg-surface px-1.5 py-0.5 rounded">{sessionToken}</code>
-                        </p>
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface border border-line font-mono text-xs text-muted">
                           <Clock size={13} />
                           <span>Session expires in {formatTime(timeLeftSec)}</span>
@@ -602,15 +606,75 @@ export default function CheckWizardPage() {
                       </div>
                     )}
 
+                    {/* Shared Inspection Checklist matching the Desktop Scanner */}
+                    <div className="p-4 rounded-btn bg-surface border border-line text-left space-y-2.5 max-w-md mx-auto text-xs font-mono">
+                      <div className="flex items-center justify-between text-muted pb-2 border-b border-line text-[11px] font-sans font-semibold uppercase tracking-wider">
+                        <span>Hardware Inspection</span>
+                        <span className={pollStatus === 'success' ? 'text-success font-mono font-bold' : 'text-primary font-mono'}>
+                          {pollStatus === 'success' ? '✔ Synchronized' : 'Listening...'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 text-text">
+                        {pollStatus === 'success' ? (
+                          <CheckCircle2 size={15} className="text-success flex-shrink-0" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-primary/50 border-t-transparent animate-spin flex-shrink-0" />
+                        )}
+                        <span className="truncate">
+                          {pollStatus === 'success' && scannedHardware?.gpu_name
+                            ? `Graphics card: ${scannedHardware.gpu_name} (${scannedHardware.vram_gb} GB)`
+                            : 'Graphics card: Inspecting GPU & VRAM...'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 text-text">
+                        {pollStatus === 'success' ? (
+                          <CheckCircle2 size={15} className="text-success flex-shrink-0" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-primary/50 border-t-transparent animate-spin flex-shrink-0" />
+                        )}
+                        <span className="truncate">
+                          {pollStatus === 'success' && scannedHardware?.ram_gb
+                            ? `Memory: ${scannedHardware.ram_gb} GB RAM`
+                            : 'Memory: Inspecting system RAM...'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 text-text">
+                        {pollStatus === 'success' ? (
+                          <CheckCircle2 size={15} className="text-success flex-shrink-0" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-primary/50 border-t-transparent animate-spin flex-shrink-0" />
+                        )}
+                        <span className="truncate">
+                          {pollStatus === 'success' && scannedHardware?.cpu_name
+                            ? `Processor: ${scannedHardware.cpu_name}`
+                            : 'Processor: Inspecting CPU cores...'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 text-text">
+                        {pollStatus === 'success' ? (
+                          <CheckCircle2 size={15} className="text-success flex-shrink-0" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-primary/50 border-t-transparent animate-spin flex-shrink-0" />
+                        )}
+                        <span className="truncate">
+                          {pollStatus === 'success'
+                            ? 'Storage: Free disk space verified'
+                            : 'Storage: Inspecting free disk space...'}
+                        </span>
+                      </div>
+                    </div>
+
                     {pollStatus === 'success' && (
                       <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
+                        initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="py-4 space-y-2 text-success"
+                        className="pt-2 text-success space-y-1"
                       >
-                        <CheckCircle2 size={44} className="mx-auto" />
-                        <div className="text-lg font-bold text-text">Hardware scan received!</div>
-                        <p className="text-xs text-muted font-mono">Generating your model compatibility report...</p>
+                        <div className="text-sm font-bold text-text">Hardware synced! Opening your report...</div>
                       </motion.div>
                     )}
 
