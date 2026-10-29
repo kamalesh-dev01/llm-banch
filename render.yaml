@@ -9,3 +9,9 @@ services:
         value: 3.12.0
       - key: DATABASE_URL
         sync: false
+      - key: SCANNER_DOWNLOAD_URL
+        value: https://github.com/kamalesh-io/llm-banch/releases/download/v1.1.0/LLMBench-Scanner.exe
+      - key: SCANNER_SHA256
+        value: 68e0dc8d189d31b1baf8d4be1132ea8aede1033f267eac1cf314a393b45f621d
+      - key: SCANNER_SIZE_MB
+        value: "31.67"
