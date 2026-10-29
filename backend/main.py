@@ -4,8 +4,14 @@ It sets up the app, configures CORS, creates database tables, and registers rout
 """
 
 import logging
-from contextlib import asynccontextmanager
 import os
+import sys
+from contextlib import asynccontextmanager
+
+# Ensure backend directory is in sys.path so modules resolve whether executed from root or backend/
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
