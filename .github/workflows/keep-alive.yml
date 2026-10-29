@@ -1,0 +1,23 @@
+name: Keep-Alive (Render & Supabase)
+
+on:
+  schedule:
+    # Trigger every 14 minutes to keep Render awake (sleeps at 15m) and query Supabase
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Ping Health Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API & Database
+        run: |
+          echo "Pinging LLM Bench backend health endpoint..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}s" https://llm-banch.onrender.com/api/health)
+          echo "$RESPONSE"
+          if echo "$RESPONSE" | grep -q '"status":"ok"'; then
+            echo "Backend and Supabase DB are active and healthy."
+          else
+            echo "Warning: Health endpoint returned unexpected response."
+          fi
