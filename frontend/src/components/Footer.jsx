@@ -23,7 +23,7 @@ function GithubIcon({ size = 16, className = '' }) {
 }
 
 export default function Footer() {
-  const githubUrl = import.meta.env.VITE_GITHUB_URL || 'https://github.com'
+  const githubUrl = import.meta.env.VITE_GITHUB_URL || 'https://github.com/kamalesh-io/llm-banch'
 
   return (
     <footer className="mt-auto bg-surface border-t border-line text-muted font-sans" role="contentinfo">
@@ -35,10 +35,12 @@ export default function Footer() {
               to="/"
               className="inline-flex items-center gap-2.5 font-heading font-bold text-lg text-text hover:text-primary transition"
             >
-              <div className="w-7 h-7 rounded-btn bg-primary-soft text-primary flex items-center justify-center">
-                <Cpu size={16} />
-              </div>
-              <span>LLM Bench</span>
+              <img
+                src="/logo-icon.png"
+                alt="LLM Bench"
+                className="w-7 h-7 rounded-lg object-contain"
+              />
+              <span>LLM <span className="text-primary">Bench</span></span>
             </Link>
             <p className="text-sm leading-relaxed max-w-sm">
               Find out which open-weight language models run smoothly on your computer before downloading them.
