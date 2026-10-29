@@ -12,6 +12,6 @@ services:
       - key: SCANNER_DOWNLOAD_URL
         value: https://github.com/kamalesh-io/llm-banch/releases/download/v1.1.0/LLMBench-Scanner.exe
       - key: SCANNER_SHA256
-        value: 68e0dc8d189d31b1baf8d4be1132ea8aede1033f267eac1cf314a393b45f621d
+        value: 190486ec32c7ad768b12f94b72e30a84d5329dcf0827f5fa5e25fb7e27b606c8
       - key: SCANNER_SIZE_MB
         value: "31.67"

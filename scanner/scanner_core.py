@@ -18,8 +18,8 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Constants overridable by environment variables
-BACKEND_URL = os.environ.get("LLMBENCH_BACKEND", "http://127.0.0.1:8000")
-SITE_URL = os.environ.get("LLMBENCH_SITE", "http://localhost:5173")
+BACKEND_URL = os.environ.get("LLMBENCH_BACKEND", "https://llm-banch.onrender.com")
+SITE_URL = os.environ.get("LLMBENCH_SITE", "https://llm-banch.vercel.app")
 
 # File logger to %TEMP%\llmbench-scanner.log
 LOG_PATH = os.path.join(tempfile.gettempdir(), "llmbench-scanner.log")

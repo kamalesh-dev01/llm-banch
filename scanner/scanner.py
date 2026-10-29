@@ -11,8 +11,8 @@ import time
 import requests
 import psutil
 
-BACKEND_URL = "http://localhost:8000"
-WEBSITE_URL = "http://localhost:5173"
+BACKEND_URL = os.environ.get("LLMBENCH_BACKEND", "https://llm-banch.onrender.com")
+WEBSITE_URL = os.environ.get("LLMBENCH_SITE", "https://llm-banch.vercel.app")
 
 def get_gpu_info() -> dict:
     """
